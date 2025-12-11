@@ -10,8 +10,14 @@ public class CprHeartMonitor : MonoBehaviour
     public Transform chestPlate;
     public Transform monitorQuad;
     
+    [Header("Hand Model Switching")]
+    public GameObject leftHandVisual;
+    public GameObject rightHandVisual;
+    public GameObject cprHandsPose;
+    
     [Header("BPM Display")]
     public TextMeshProUGUI bpmText;
+    public TextMeshProUGUI statsText;
     
     [Header("Settings")]
     public float handOverlapDistance = 0.15f;
@@ -45,6 +51,9 @@ public class CprHeartMonitor : MonoBehaviour
     private float _currentBpm;
     private int _compressionCount;
     
+    private readonly List<float> _allBpms = new List<float>();
+    private readonly List<float> _allDepths = new List<float>();
+    
     private bool _spikeQueued;
     private float _spikeQueueTime;
     private float _queuedDepth;
@@ -65,12 +74,14 @@ public class CprHeartMonitor : MonoBehaviour
             lineObj.transform.localRotation = Quaternion.identity;
             
             ecgLine = lineObj.AddComponent<LineRenderer>();
-            ecgLine.startWidth = 0.008f;
-            ecgLine.endWidth = 0.008f;
+            ecgLine.startWidth = 0.004f;
+            ecgLine.endWidth = 0.004f;
             ecgLine.material = new Material(Shader.Find("Sprites/Default"));
-            ecgLine.startColor = Color.green;
-            ecgLine.endColor = Color.green;
+            ecgLine.startColor = new Color(0.2f, 1f, 0.3f);
+            ecgLine.endColor = new Color(0.2f, 1f, 0.3f);
             ecgLine.useWorldSpace = false;
+            ecgLine.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            ecgLine.receiveShadows = false;
         }
         
         if (bpmText == null && monitorQuad != null)
@@ -101,6 +112,22 @@ public class CprHeartMonitor : MonoBehaviour
                 
                 RectTransform rect = textObj.GetComponent<RectTransform>();
                 rect.sizeDelta = new Vector2(400, 150);
+                
+                // Create stats text
+                GameObject statsObj = new GameObject("Stats_Text");
+                statsObj.transform.SetParent(canvasObj.transform);
+                statsObj.transform.localPosition = new Vector3(0, -120, 0);
+                statsObj.transform.localRotation = Quaternion.identity;
+                statsObj.transform.localScale = Vector3.one;
+                
+                statsText = statsObj.AddComponent<TextMeshProUGUI>();
+                statsText.fontSize = 60;
+                statsText.color = new Color(0.7f, 0.7f, 0.7f);
+                statsText.alignment = TextAlignmentOptions.Center;
+                statsText.text = "Avg: -- BPM | -- cm";
+                
+                RectTransform statsRect = statsObj.GetComponent<RectTransform>();
+                statsRect.sizeDelta = new Vector2(600, 100);
             }
         }
         
@@ -117,8 +144,23 @@ public class CprHeartMonitor : MonoBehaviour
         if (handsOverlap && !_previouslyOverlapping)
         {
             Debug.Log("CPR POSE READY");
+            ShowCprPose();
+        }
+        else if (!handsOverlap && _previouslyOverlapping)
+        {
+            ShowNormalHands();
         }
         _previouslyOverlapping = handsOverlap;
+        
+        // Continuously update CPR pose position while hands are overlapping
+        if (handsOverlap && cprHandsPose != null && cprHandsPose.activeSelf)
+        {
+            Vector3 midPoint = (leftHand.position + rightHand.position) / 2f;
+            cprHandsPose.transform.position = midPoint;
+            
+            // Optional: Match rotation of one of the hands
+            cprHandsPose.transform.rotation = leftHand.rotation;
+        }
         
         if (handsOverlap && chestPlate != null)
         {
@@ -156,10 +198,14 @@ public class CprHeartMonitor : MonoBehaviour
                 {
                     _compressionCount++;
                     
+                    // Track depth for averaging
+                    _allDepths.Add(_maxDepthReached);
+                    
                     float timeSinceLast = Time.time - _lastCompressionTime;
                     if (timeSinceLast > 0.1f && _compressionCount >= compressionsBeforeBpm)
                     {
                         _currentBpm = 60f / timeSinceLast;
+                        _allBpms.Add(_currentBpm);
                     }
                     
                     float compressionSpeed = _currentBpm / idealBpm;
@@ -174,6 +220,7 @@ public class CprHeartMonitor : MonoBehaviour
                     if (_compressionCount >= compressionsBeforeBpm)
                     {
                         UpdateBpmDisplay();
+                        UpdateStatsDisplay();
                     }
                     else
                     {
@@ -233,11 +280,59 @@ public class CprHeartMonitor : MonoBehaviour
         }
     }
 
+    void UpdateStatsDisplay()
+    {
+        if (statsText == null) return;
+        
+        float avgBpm = 0f;
+        if (_allBpms.Count > 0)
+        {
+            foreach (float bpm in _allBpms) avgBpm += bpm;
+            avgBpm /= _allBpms.Count;
+        }
+        
+        float avgDepth = 0f;
+        if (_allDepths.Count > 0)
+        {
+            foreach (float depth in _allDepths) avgDepth += depth;
+            avgDepth /= _allDepths.Count;
+        }
+        
+        if (_allBpms.Count > 0 && _allDepths.Count > 0)
+        {
+            statsText.text = $"Avg: {avgBpm:F0} BPM | {(avgDepth * 100):F1} cm";
+        }
+        else
+        {
+            statsText.text = "Avg: -- BPM | -- cm";
+        }
+    }
+
     bool CheckHandsOverlap()
     {
         if (leftHand == null || rightHand == null) return false;
         float distance = Vector3.Distance(leftHand.position, rightHand.position);
         return distance < handOverlapDistance;
+    }
+
+    void ShowCprPose()
+    {
+        if (leftHandVisual != null) leftHandVisual.SetActive(false);
+        if (rightHandVisual != null) rightHandVisual.SetActive(false);
+        if (cprHandsPose != null)
+        {
+            cprHandsPose.SetActive(true);
+            // Position the CPR pose at the midpoint between hands
+            Vector3 midPoint = (leftHand.position + rightHand.position) / 2f;
+            cprHandsPose.transform.position = midPoint;
+        }
+    }
+
+    void ShowNormalHands()
+    {
+        if (leftHandVisual != null) leftHandVisual.SetActive(true);
+        if (rightHandVisual != null) rightHandVisual.SetActive(true);
+        if (cprHandsPose != null) cprHandsPose.SetActive(false);
     }
 
     void UpdateChestPhysics()
