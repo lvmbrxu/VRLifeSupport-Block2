@@ -36,7 +36,7 @@ public class PokePhoneSequence : MonoBehaviour
     {
         if (target == null)
         {
-            Debug.LogError("Target is NULL!");
+            Debug.Log("Target is NULL!");
             yield break;
         }
 
