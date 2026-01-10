@@ -1,116 +1,125 @@
 using UnityEngine;
 
-/// <summary>
-/// Manages chest compression physics and detection
-/// </summary>
-public class CprChestController : MonoBehaviour
+[DisallowMultipleComponent]
+public sealed class CprChestController : MonoBehaviour
 {
     [Header("Chest Reference")]
-    public Transform chestPlate;
-    
+    [SerializeField] private Transform chestPlate;
+
     [Header("Physics Settings")]
-    public float chestStiffness = 200f;
-    public float chestDamping = 10f;
-    public float maxCompression = 0.06f;
-    
-    private Vector3 chestOriginalPos;
-    private float currentChestCompression;
-    private float chestVelocity;
-    
-    private float startHandY;
-    private float maxDepthReached;
-    private bool trackingPress;
-    private bool previouslyInCube;
-    
+    [SerializeField, Min(0f)] private float chestStiffness = 200f;
+    [SerializeField, Min(0f)] private float chestDamping = 10f;
+    [SerializeField, Min(0f)] private float maxCompression = 0.06f;
+
+    [Header("Detection")]
+    [SerializeField, Min(0f)] private float minDepthToCount = 0.01f;
+
+    private Vector3 _chestOriginalLocalPos;
+    private Vector3 _chestOriginalWorldPos;
+
+    private float _currentCompression;
+    private float _velocity;
+
+    private float _startHandY;
+    private float _maxDepthReached;
+    private bool _tracking;
+    private bool _wasInZone;
+
+    /// <summary>
+    /// World-space offset of the chest plate from its original position.
+    /// This is what you add to your pinned CPR pose to make it "sink" with the chest.
+    /// </summary>
+    public Vector3 ChestWorldOffset { get; private set; }
+
     public void Initialize()
     {
-        if (chestPlate != null)
-        {
-            chestOriginalPos = chestPlate.position;
-        }
+        if (chestPlate == null) return;
+
+        _chestOriginalLocalPos = chestPlate.localPosition;
+        _chestOriginalWorldPos = chestPlate.position;
+        ChestWorldOffset = Vector3.zero;
     }
-    
-    public bool IsHandsInChest(Vector3 handsCenter)
-    {
-        if (chestPlate == null) return false;
-        Bounds chestBounds = new Bounds(chestPlate.position, chestPlate.localScale);
-        return chestBounds.Contains(handsCenter);
-    }
-    
-    public bool UpdateCompression(Vector3 handsCenter, out float depthReached)
+
+    /// <summary>
+    /// Updates compression tracking and injects hand force into the chest spring.
+    /// Returns true once a compression is completed (hands leave zone).
+    /// </summary>
+    public bool UpdateCompression(Vector3 handsCenter, bool inCprZone, float dt, out float depthReached)
     {
         depthReached = 0f;
-        bool compressionCompleted = false;
-        
-        if (chestPlate == null) return false;
-        
-        bool handsInCube = IsHandsInChest(handsCenter);
-        
-        if (handsInCube)
+
+        if (chestPlate == null)
+            return false;
+
+        if (inCprZone)
         {
-            if (!trackingPress)
+            if (!_tracking)
             {
-                startHandY = handsCenter.y;
-                trackingPress = true;
-                maxDepthReached = 0f;
+                _startHandY = handsCenter.y;
+                _tracking = true;
+                _maxDepthReached = 0f;
             }
-            
-            float currentDepth = startHandY - handsCenter.y;
-            if (currentDepth > maxDepthReached)
-            {
-                maxDepthReached = currentDepth;
-            }
-            
-            if (currentDepth > 0)
+
+            float currentDepth = _startHandY - handsCenter.y;
+            if (currentDepth > _maxDepthReached)
+                _maxDepthReached = currentDepth;
+
+            if (currentDepth > 0f)
             {
                 float targetCompression = Mathf.Clamp(currentDepth, 0f, maxCompression);
-                float compressionDiff = targetCompression - currentChestCompression;
-                chestVelocity += compressionDiff * chestStiffness * Time.deltaTime;
+                float diff = targetCompression - _currentCompression;
+
+                // Inject force based on how far behind we are.
+                _velocity += diff * chestStiffness * dt;
             }
-            
-            previouslyInCube = true;
+
+            _wasInZone = true;
+            return false;
         }
-        else
+
+        // Left zone: finalize compression if we had one.
+        if (_wasInZone && _tracking && _maxDepthReached >= minDepthToCount)
         {
-            if (previouslyInCube && trackingPress && maxDepthReached > 0.01f)
-            {
-                depthReached = maxDepthReached;
-                compressionCompleted = true;
-            }
-            
-            trackingPress = false;
-            maxDepthReached = 0f;
-            previouslyInCube = false;
+            depthReached = _maxDepthReached;
+            ResetTrackingInternal();
+            return true;
         }
-        
-        return compressionCompleted;
+
+        ResetTrackingInternal();
+        return false;
     }
-    
-    public void UpdatePhysics()
+
+    public void UpdatePhysics(float dt)
     {
-        if (chestPlate == null) return;
-        
-        float springForce = -currentChestCompression * chestStiffness;
-        chestVelocity += springForce * Time.deltaTime;
-        chestVelocity *= (1f - chestDamping * Time.deltaTime);
-        currentChestCompression += chestVelocity * Time.deltaTime;
-        currentChestCompression = Mathf.Clamp(currentChestCompression, 0f, maxCompression);
-        
-        chestPlate.position = chestOriginalPos - new Vector3(0, currentChestCompression, 0);
+        if (chestPlate == null)
+            return;
+
+        // Spring back to zero compression.
+        float springForce = -_currentCompression * chestStiffness;
+        _velocity += springForce * dt;
+
+        // Stable damping (frame-rate independent)
+        float dampingFactor = Mathf.Exp(-chestDamping * dt);
+        _velocity *= dampingFactor;
+
+        _currentCompression += _velocity * dt;
+        _currentCompression = Mathf.Clamp(_currentCompression, 0f, maxCompression);
+
+        chestPlate.localPosition = _chestOriginalLocalPos - Vector3.up * _currentCompression;
+
+        // Update world offset after we've moved the chest
+        ChestWorldOffset = chestPlate.position - _chestOriginalWorldPos;
     }
-    
+
     public void ResetTracking()
     {
-        previouslyInCube = false;
-        trackingPress = false;
+        ResetTrackingInternal();
     }
-    
-    public void OnDrawGizmos()
+
+    private void ResetTrackingInternal()
     {
-        if (chestPlate != null)
-        {
-            Gizmos.color = previouslyInCube ? Color.red : Color.yellow;
-            Gizmos.DrawWireCube(chestPlate.position, chestPlate.localScale);
-        }
+        _wasInZone = false;
+        _tracking = false;
+        _maxDepthReached = 0f;
     }
 }

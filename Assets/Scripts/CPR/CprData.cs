@@ -1,115 +1,98 @@
 using UnityEngine;
-using System.Collections.Generic;
 
-/// <summary>
-/// Stores all CPR compression data and statistics
-/// </summary>
-public class CprData
+public sealed class CprData
 {
     public int CompressionCount { get; private set; }
     public float CurrentBpm { get; private set; }
     public float SmoothedBpm { get; private set; }
-    
-    private readonly List<float> allBpms = new List<float>();
-    private readonly List<float> allDepths = new List<float>();
-    private readonly Queue<float> bpmWindow;
-    private readonly int windowSize;
-    
-    // For time-based BPM calculation
-    private float sessionStartTime;
-    private bool sessionStarted;
-    
+
+    private float _sumDepth;
+    private int _depthCount;
+
+    private float _sumBpm;
+    private int _bpmCount;
+
+    private readonly float[] _bpmWindow;
+    private int _bpmWindowCount;
+    private int _bpmWindowIndex;
+    private float _bpmWindowSum;
+
+    private float _sessionStartTime;
+    private bool _sessionStarted;
+
     public CprData(int movingAverageWindow = 5)
     {
-        windowSize = movingAverageWindow;
-        bpmWindow = new Queue<float>();
-        sessionStarted = false;
+        movingAverageWindow = Mathf.Clamp(movingAverageWindow, 1, 50);
+        _bpmWindow = new float[movingAverageWindow];
     }
-    
+
     public void RecordCompression(float depth, float bpm)
     {
-        if (!sessionStarted)
+        if (!_sessionStarted)
         {
-            sessionStartTime = Time.time;
-            sessionStarted = true;
+            _sessionStarted = true;
+            _sessionStartTime = Time.time;
         }
-        
+
         CompressionCount++;
-        allDepths.Add(depth);
-        
-        if (bpm > 0)
+
+        _sumDepth += depth;
+        _depthCount++;
+
+        if (bpm > 0f)
         {
             CurrentBpm = bpm;
-            allBpms.Add(bpm);
-            UpdateMovingAverage(bpm);
+
+            _sumBpm += bpm;
+            _bpmCount++;
+
+            AddToMovingAverage(bpm);
         }
     }
-    
-    private void UpdateMovingAverage(float newBpm)
+
+    private void AddToMovingAverage(float bpm)
     {
-        bpmWindow.Enqueue(newBpm);
-        
-        if (bpmWindow.Count > windowSize)
+        if (_bpmWindowCount < _bpmWindow.Length)
         {
-            bpmWindow.Dequeue();
+            _bpmWindow[_bpmWindowIndex] = bpm;
+            _bpmWindowSum += bpm;
+            _bpmWindowCount++;
         }
-        
-        float sum = 0f;
-        foreach (float bpm in bpmWindow)
+        else
         {
-            sum += bpm;
+            // Replace oldest
+            _bpmWindowSum -= _bpmWindow[_bpmWindowIndex];
+            _bpmWindow[_bpmWindowIndex] = bpm;
+            _bpmWindowSum += bpm;
         }
-        SmoothedBpm = sum / bpmWindow.Count;
+
+        _bpmWindowIndex = (_bpmWindowIndex + 1) % _bpmWindow.Length;
+        SmoothedBpm = _bpmWindowSum / Mathf.Max(1, _bpmWindowCount);
     }
-    
+
     public float GetAverageBpm()
     {
-        if (allBpms.Count == 0) return 0f;
-        
-        float sum = 0f;
-        foreach (float bpm in allBpms)
-        {
-            sum += bpm;
-        }
-        return sum / allBpms.Count;
+        return _bpmCount > 0 ? (_sumBpm / _bpmCount) : 0f;
     }
-    
-    // Calculate ACTUAL BPM based on real time elapsed
-    public float GetActualBpmOverTime()
-    {
-        if (!sessionStarted || CompressionCount == 0) return 0f;
-        
-        float elapsedMinutes = (Time.time - sessionStartTime) / 60f;
-        if (elapsedMinutes <= 0) return 0f;
-        
-        return CompressionCount / elapsedMinutes;
-    }
-    
+
     public float GetAverageDepth()
     {
-        if (allDepths.Count == 0) return 0f;
-        
-        float sum = 0f;
-        foreach (float depth in allDepths)
-        {
-            sum += depth;
-        }
-        return sum / allDepths.Count;
+        return _depthCount > 0 ? (_sumDepth / _depthCount) : 0f;
     }
-    
-    public int GetBpmCount()
+
+    public float GetActualBpmOverTime()
     {
-        return allBpms.Count;
+        if (!_sessionStarted || CompressionCount == 0) return 0f;
+
+        float elapsedMinutes = (Time.time - _sessionStartTime) / 60f;
+        if (elapsedMinutes <= 0f) return 0f;
+
+        return CompressionCount / elapsedMinutes;
     }
-    
-    public int GetDepthCount()
-    {
-        return allDepths.Count;
-    }
-    
+
     public float GetSessionDurationMinutes()
     {
-        if (!sessionStarted) return 0f;
-        return (Time.time - sessionStartTime) / 60f;
+        if (!_sessionStarted) return 0f;
+        return (Time.time - _sessionStartTime) / 60f;
     }
 }
