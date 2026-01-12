@@ -812,6 +812,80 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 131384285}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &147530896
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 147530899}
+  - component: {fileID: 147530898}
+  - component: {fileID: 147530897}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &147530897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 147530896}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b87f2c8bc9fbed64591e1f44e3cf0f11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BreathingCheckTrigger
+  playerHead: {fileID: 747268358}
+  holdSeconds: 1.5
+  useDistanceCheck: 1
+  maxDistanceToCenter: 0.25
+  onBreathingChecked:
+    m_PersistentCalls:
+      m_Calls: []
+  logDebug: 1
+--- !u!135 &147530898
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 147530896}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.2
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!4 &147530899
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 147530896}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.7071068, z: -0.7071068, w: 0}
+  m_LocalPosition: {x: 0.0411763, y: -0.52, z: 0.29}
+  m_LocalScale: {x: 5.88235, y: 5.882352, z: 5.882352}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2084171818}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &292255383 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6c925264851d4c943ac6f6455548b200, type: 3}
@@ -990,7 +1064,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 48562594f76a61a4a85cdb1aff969900, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1082,11 +1156,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.132
+      value: 0.179
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -2.227
+      value: -3.161
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1129,6 +1203,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
       insertIndex: -1
       addedObject: {fileID: 961598381}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 147530899}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
       insertIndex: -1
@@ -1184,6 +1261,11 @@ Transform:
 --- !u!1 &736932488 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1957837663897548597, guid: ff59fb8792ceba64399ccdf362e46a3c, type: 3}
+  m_PrefabInstance: {fileID: 2898367777793054651}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &747268358 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7529043345491017068, guid: ff59fb8792ceba64399ccdf362e46a3c, type: 3}
   m_PrefabInstance: {fileID: 2898367777793054651}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &824673547
@@ -2533,6 +2615,62 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.08, y: 0.02, z: 0.20324692}
   m_Center: {x: 0.086933166, y: -0.015430748, z: 0.0781125}
+--- !u!1 &1529069648
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1529069650}
+  - component: {fileID: 1529069649}
+  m_Layer: 0
+  m_Name: ScenarioDirector
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1529069649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1529069648}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de12b83a05c3dfd4b887bdb9484bb3cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScenarioProgress
+  steps:
+  - name: Check Breathing
+    requiredFlags: 04000000
+    allowMakeSpaceGesture: 0
+    allowStartCPR: 0
+    allowUseAED: 0
+  - name: Check Breathing
+    requiredFlags: 04000000
+    allowMakeSpaceGesture: 0
+    allowStartCPR: 0
+    allowUseAED: 0
+  logProgress: 1
+--- !u!4 &1529069650
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1529069648}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 7.14108, y: -0, z: -3.39141}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1551537937 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6099644924956267675, guid: ff59fb8792ceba64399ccdf362e46a3c, type: 3}
@@ -4252,3 +4390,4 @@ SceneRoots:
   - {fileID: 410182595}
   - {fileID: 1716770038}
   - {fileID: 1367661403}
+  - {fileID: 1529069650}
