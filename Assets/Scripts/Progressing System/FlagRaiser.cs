@@ -2,10 +2,26 @@ using UnityEngine;
 
 public sealed class ScenarioFlagRaiser : MonoBehaviour
 {
-    [SerializeField] private ScenarioFlag flag;
+    [SerializeField] private ScenarioDirector director;
+    [SerializeField] private string flagToRaise;
 
-    public void RaiseFlag()
+    private void Reset()
     {
-        ScenarioSignals.Raise(flag);
+        director = FindFirstObjectByType<ScenarioDirector>();
+    }
+
+    public void Raise()
+    {
+        if (director == null)
+        {
+            director = FindFirstObjectByType<ScenarioDirector>();
+            if (director == null)
+            {
+                Debug.LogError("ScenarioFlagRaiser: No ScenarioDirector found in scene.", this);
+                return;
+            }
+        }
+
+        director.RaiseFlag(flagToRaise);
     }
 }
