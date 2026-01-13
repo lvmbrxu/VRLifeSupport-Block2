@@ -92,7 +92,6 @@ public sealed class CprSystem : MonoBehaviour
             handController.SetChestWorldOffset(chestController.ChestWorldOffset);
     }
 
-
     private void LateUpdate()
     {
         if (ecgDisplay == null) return;
