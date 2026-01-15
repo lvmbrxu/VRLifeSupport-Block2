@@ -1101,11 +1101,11 @@ Transform:
   m_GameObject: {fileID: 147530896}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0.7071068, w: 0}
-  m_LocalPosition: {x: 0.0411763, y: -0.52, z: 0.29}
+  m_LocalPosition: {x: 0.0411763, y: -0.5200008, z: 0.29000026}
   m_LocalScale: {x: 5.88235, y: 5.882352, z: 5.882352}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2084171818}
+  m_Father: {fileID: 1360826748}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &169307023
 GameObject:
@@ -1853,35 +1853,8 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1843027021}
-    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 961598381}
-    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 147530899}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2084171823}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2084171822}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2084171821}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2084171820}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2084171819}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2084171824}
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
 --- !u!1 &711621038
 GameObject:
@@ -2892,12 +2865,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 961598380}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.523528, y: -2.9470592, z: 1.1117655}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.523528, y: -2.9470603, z: 1.1117668}
   m_LocalScale: {x: 5.88235, y: 5.882352, z: 5.882352}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2084171818}
+  m_Father: {fileID: 1360826748}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1019286640
 GameObject:
@@ -3099,11 +3072,6 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 8fbbf7bf883c0d14bbae191d637de6b7, type: 3}
   m_PrefabInstance: {fileID: 1580219438}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &1056971984 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 1168282161277561652, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
-  m_PrefabInstance: {fileID: 667699847}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1063815477
 PrefabInstance:
@@ -3712,11 +3680,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 2068954504}
   m_SourcePrefab: {fileID: 100100000, guid: 436011756d4086644bb7c46a95416795, type: 3}
---- !u!1 &1190812113 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
-  m_PrefabInstance: {fileID: 667699847}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1312146366 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5774396104686201645, guid: 909294a3c82b2e94f98e65551a048a5b, type: 3}
@@ -3985,6 +3948,137 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 414d1171531ab3340bda4ed71bdaa7f8, type: 3}
   m_PrefabInstance: {fileID: 403590789}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1360826741 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 668408fff37c1984daeb7b1c3d1499aa, type: 3}
+  m_PrefabInstance: {fileID: 1484599825}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1360826742
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360826741}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a026a599e68c8a43a3b346821efecb0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CprFirstCompressionFlag
+  scenario: {fileID: 1529069649}
+  cprHeartMonitor: {fileID: 0}
+  startedCprFlag: StartedCPR
+  log: 1
+--- !u!114 &1360826743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360826741}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef3b4984f99fd924caef5cfd496921ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CprEcgDisplay
+  monitorRoot: {fileID: 1348453615}
+  localOffset: {x: 0, y: 0, z: -0.01}
+  autoCreateLineRenderer: 1
+  ecgLine: {fileID: 1915113805}
+  lineMaterial: {fileID: 0}
+  lineWidth: 0.004
+  maxPoints: 500
+  ecgScale: 0.2
+  baseScrollSpeed: 2
+  xWidth: 0.8
+  IdealDepth: 0.05
+  IdealBpm: 100
+--- !u!114 &1360826744
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360826741}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 930531819cc55704f92b6938a40f8fed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CprChestController
+  chestPlate: {fileID: 1883120017}
+  chestStiffness: 200
+  chestDamping: 10
+  maxCompression: 0.06
+  minDepthToCount: 0.01
+--- !u!114 &1360826745
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360826741}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbc6b8415ae2f3f49a3099d48384fc5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CprUIDisplay
+  statsText: {fileID: 1559929394}
+  qualityText: {fileID: 125921468}
+  actualBpmText: {fileID: 83644975}
+  autoCreateOnMonitor: 1
+  monitorRoot: {fileID: 0}
+  canvasLocalOffset: {x: 0, y: 0, z: -0.001}
+  canvasLocalScale: 0.001
+  IdealBpm: 100
+--- !u!114 &1360826746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360826741}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f20a4267c6f14f645a5aa1fd6f7e5fb4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CprHandController
+  leftHand: {fileID: 8075461071504550342}
+  rightHand: {fileID: 1466716113577429494}
+  leftHandVisual: {fileID: 736932488}
+  rightHandVisual: {fileID: 1949729467}
+  cprHandsPose: {fileID: 306016808}
+  handOverlapDistance: 0.1
+  cprZone: {fileID: 1843027022}
+  cprPoseAnchor: {fileID: 961598381}
+  insideEpsilon: 0.001
+  poseFollowChestSharpness: 35
+--- !u!114 &1360826747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360826741}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24efb3a9857b1ca45887ff5a3d2595af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CprSystem
+  handController: {fileID: 1360826746}
+  chestController: {fileID: 1360826744}
+  ecgDisplay: {fileID: 1360826743}
+  uiDisplay: {fileID: 1360826745}
+  compressionsBeforeBpm: 20
+  idealDepth: 0.05
+  idealBpm: 100
+  minSecondsBetweenCompressions: 0.1
+  bpmMovingAverageWindow: 5
+  uiRateUpdateInterval: 0.25
+--- !u!4 &1360826748 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 668408fff37c1984daeb7b1c3d1499aa, type: 3}
+  m_PrefabInstance: {fileID: 1484599825}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1362338146 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5774396104686201645, guid: 909294a3c82b2e94f98e65551a048a5b, type: 3}
@@ -4079,7 +4173,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1469894054
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4323,8 +4417,35 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 3d079736c3eb33b44a4051833e82e3d2, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 668408fff37c1984daeb7b1c3d1499aa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1843027021}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 668408fff37c1984daeb7b1c3d1499aa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 961598381}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 668408fff37c1984daeb7b1c3d1499aa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 147530899}
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 668408fff37c1984daeb7b1c3d1499aa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1360826747}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 668408fff37c1984daeb7b1c3d1499aa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1360826746}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 668408fff37c1984daeb7b1c3d1499aa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1360826745}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 668408fff37c1984daeb7b1c3d1499aa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1360826744}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 668408fff37c1984daeb7b1c3d1499aa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1360826743}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 668408fff37c1984daeb7b1c3d1499aa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1360826742}
   m_SourcePrefab: {fileID: 100100000, guid: 668408fff37c1984daeb7b1c3d1499aa, type: 3}
 --- !u!1 &1495135777
 GameObject:
@@ -4392,13 +4513,10 @@ MonoBehaviour:
     - Called112
     - RequestedAED
     enableBehaviours:
-    - {fileID: 2084171823}
+    - {fileID: 1360826747}
     enableObjects: []
-    forceOffObjects: []
-    onEnter:
-      m_PersistentCalls:
-        m_Calls: []
-    onExit:
+    forceOffUntilUnlocked: []
+    onUnlocked:
       m_PersistentCalls:
         m_Calls: []
   - name: People around
@@ -4407,11 +4525,8 @@ MonoBehaviour:
     enableBehaviours:
     - {fileID: 1716770037}
     enableObjects: []
-    forceOffObjects: []
-    onEnter:
-      m_PersistentCalls:
-        m_Calls: []
-    onExit:
+    forceOffUntilUnlocked: []
+    onUnlocked:
       m_PersistentCalls:
         m_Calls: []
   log: 1
@@ -5130,14 +5245,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PushAwayCubes
   origin: {fileID: 2084171818}
-  pushableLayers:
+  crowdLayers:
     serializedVersion: 2
     m_Bits: 0
   radius: 5.8
-  pushForce: 3
-  upwardForce: 0.2
-  flattenY: 1
+  exitPoint: {fileID: 0}
+  scenario: {fileID: 0}
+  raiseCrowdClearedFlag: 1
+  crowdClearedFlag: CrowdCleared
   fallbackMoveDistance: 1.52
+  log: 0
 --- !u!4 &1716770038
 Transform:
   m_ObjectHideFlags: 0
@@ -5499,11 +5616,11 @@ Transform:
   m_GameObject: {fileID: 1843027020}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0.7071068, w: 0}
-  m_LocalPosition: {x: -0.38823527, y: -2.85, z: -0.314}
+  m_LocalPosition: {x: -0.38823527, y: -2.8500013, z: -0.31399935}
   m_LocalScale: {x: 5.88235, y: 5.882352, z: 5.882352}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2084171818}
+  m_Father: {fileID: 1360826748}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &1843027022
 BoxCollider:
@@ -5717,6 +5834,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 909294a3c82b2e94f98e65551a048a5b, type: 3}
+--- !u!4 &1883120017 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3594678472518635395, guid: 668408fff37c1984daeb7b1c3d1499aa, type: 3}
+  m_PrefabInstance: {fileID: 1484599825}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1899124114 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5774396104686201645, guid: 909294a3c82b2e94f98e65551a048a5b, type: 3}
@@ -6498,127 +6620,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: eefc38615af681e4d8dd908a60bf8edd, type: 3}
   m_PrefabInstance: {fileID: 667699847}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2084171819
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1190812113}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ef3b4984f99fd924caef5cfd496921ae, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CprEcgDisplay
-  monitorRoot: {fileID: 1348453615}
-  localOffset: {x: 0, y: 0, z: -0.01}
-  autoCreateLineRenderer: 1
-  ecgLine: {fileID: 1915113805}
-  lineMaterial: {fileID: 0}
-  lineWidth: 0.004
-  maxPoints: 500
-  ecgScale: 0.2
-  baseScrollSpeed: 2
-  xWidth: 0.8
-  IdealDepth: 0.05
-  IdealBpm: 100
---- !u!114 &2084171820
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1190812113}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dbc6b8415ae2f3f49a3099d48384fc5e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CprUIDisplay
-  statsText: {fileID: 1559929394}
-  qualityText: {fileID: 125921468}
-  actualBpmText: {fileID: 83644975}
-  autoCreateOnMonitor: 1
-  monitorRoot: {fileID: 0}
-  canvasLocalOffset: {x: 0, y: 0, z: -0.001}
-  canvasLocalScale: 0.001
-  IdealBpm: 100
---- !u!114 &2084171821
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1190812113}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f20a4267c6f14f645a5aa1fd6f7e5fb4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CprHandController
-  leftHand: {fileID: 8075461071504550342}
-  rightHand: {fileID: 1466716113577429494}
-  leftHandVisual: {fileID: 736932488}
-  rightHandVisual: {fileID: 1949729467}
-  cprHandsPose: {fileID: 306016808}
-  handOverlapDistance: 0.1
-  cprZone: {fileID: 1843027022}
-  cprPoseAnchor: {fileID: 961598381}
-  insideEpsilon: 0.001
-  poseFollowChestSharpness: 35
---- !u!114 &2084171822
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1190812113}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 930531819cc55704f92b6938a40f8fed, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CprChestController
-  chestPlate: {fileID: 1056971984}
-  chestStiffness: 200
-  chestDamping: 10
-  maxCompression: 0.06
-  minDepthToCount: 0.01
---- !u!114 &2084171823
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1190812113}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 24efb3a9857b1ca45887ff5a3d2595af, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CprSystem
-  handController: {fileID: 2084171821}
-  chestController: {fileID: 2084171822}
-  ecgDisplay: {fileID: 2084171819}
-  uiDisplay: {fileID: 2084171820}
-  compressionsBeforeBpm: 20
-  idealDepth: 0.05
-  idealBpm: 100
-  minSecondsBetweenCompressions: 0.1
-  bpmMovingAverageWindow: 5
-  uiRateUpdateInterval: 0.25
---- !u!114 &2084171824
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1190812113}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4a026a599e68c8a43a3b346821efecb0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CprFirstCompressionFlag
-  scenario: {fileID: 1529069649}
-  cprHeartMonitor: {fileID: 2084171823}
-  startedCprFlag: StartedCPR
-  log: 1
 --- !u!1 &2085030514
 GameObject:
   m_ObjectHideFlags: 0
