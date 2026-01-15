@@ -11,22 +11,21 @@ public sealed class ScenarioDirector : MonoBehaviour
     {
         public string name;
 
-        [Header("Complete this step when ALL these flags are raised")]
+        [Header("Unlock this step when ALL these flags are raised")]
         public List<string> requiredFlags = new List<string>();
 
-        [Header("Mechanics enabled while this step is ACTIVE")]
+        [Header("Unlocked mechanics (stay enabled once unlocked)")]
         [Tooltip("Drag scripts/components here (CPR scripts, AED scripts, gesture scripts, etc.)")]
         public List<Behaviour> enableBehaviours = new List<Behaviour>();
 
-        [Tooltip("Optional: objects enabled while this step is ACTIVE (UI, models, etc.)")]
+        [Tooltip("Optional: objects enabled once unlocked (UI, models, etc.)")]
         public List<GameObject> enableObjects = new List<GameObject>();
 
-        [Tooltip("Optional: objects forced OFF while this step is ACTIVE (if needed)")]
-        public List<GameObject> forceOffObjects = new List<GameObject>();
+        [Tooltip("Optional: objects forced OFF until this step is unlocked (e.g., CPR pose GO).")]
+        public List<GameObject> forceOffUntilUnlocked = new List<GameObject>();
 
         [Header("Events")]
-        public UnityEvent onEnter;
-        public UnityEvent onExit;
+        public UnityEvent onUnlocked;
     }
 
     [Header("Steps (in order)")]
@@ -37,17 +36,20 @@ public sealed class ScenarioDirector : MonoBehaviour
     [SerializeField] private List<string> startingFlags = new List<string>();
 
     private readonly HashSet<string> _flags = new HashSet<string>(StringComparer.Ordinal);
-    private int _stepIndex;
 
-    public int StepIndex => _stepIndex;
-    public string CurrentStepName => (_stepIndex >= 0 && _stepIndex < steps.Count) ? steps[_stepIndex].name : "NONE";
+    // Tracks which steps are already unlocked
+    private bool[] _unlocked;
+
+    // Optional: an index you can use for UI/debug (“what step are we on now?”)
+    private int _currentStepIndex;
+    public int CurrentStepIndex => _currentStepIndex;
+    public string CurrentStepName => (_currentStepIndex >= 0 && _currentStepIndex < steps.Count) ? steps[_currentStepIndex].name : "NONE";
 
     public event Action FlagsChanged;
-    public event Action<int> StepChanged;
+    public event Action<int> StepUnlocked; // passes step index
 
     private void Awake()
     {
-        // preload starting flags
         for (int i = 0; i < startingFlags.Count; i++)
         {
             string f = Normalize(startingFlags[i]);
@@ -65,9 +67,13 @@ public sealed class ScenarioDirector : MonoBehaviour
             return;
         }
 
-        _stepIndex = Mathf.Clamp(_stepIndex, 0, steps.Count - 1);
-        ApplyStepActivation(initial: true);
-        EvaluateProgression(); // in case startingFlags already satisfy step 0
+        _unlocked = new bool[steps.Count];
+
+        // First apply "locked" state (force-off objects)
+        ApplyUnlockState();
+
+        // Evaluate immediately in case startingFlags unlock something
+        EvaluateUnlocks();
     }
 
     public bool HasFlag(string flag)
@@ -83,9 +89,9 @@ public sealed class ScenarioDirector : MonoBehaviour
 
         if (_flags.Add(flag))
         {
-            if (log) Debug.Log($"[Scenario] Flag ON: {flag}  (Step: {CurrentStepName})", this);
+            if (log) Debug.Log($"[Scenario] Flag ON: {flag}", this);
             FlagsChanged?.Invoke();
-            EvaluateProgression();
+            EvaluateUnlocks();
         }
     }
 
@@ -98,22 +104,34 @@ public sealed class ScenarioDirector : MonoBehaviour
         {
             if (log) Debug.Log($"[Scenario] Flag OFF: {flag}", this);
             FlagsChanged?.Invoke();
+
+            // NOTE: We do NOT re-lock steps if flags are cleared.
+            // This is intentional for milestone progression.
         }
     }
 
-    private void EvaluateProgression()
+    private void EvaluateUnlocks()
     {
-        // advance while current step is complete
-        while (_stepIndex < steps.Count && IsStepComplete(steps[_stepIndex]))
+        // Unlock steps in order if their requirements are met.
+        // This allows sequential progression, but you can also remove "break" to allow out-of-order unlocks.
+        for (int i = 0; i < steps.Count; i++)
         {
-            if (_stepIndex >= steps.Count - 1)
-                return;
+            if (_unlocked[i])
+                continue;
 
-            ChangeStep(_stepIndex + 1);
+            if (IsStepReadyToUnlock(steps[i]))
+            {
+                UnlockStep(i);
+                // Continue checking next steps in case multiple unlock instantly
+                continue;
+            }
+
+            // If you want STRICT order, uncomment this:
+            // break;
         }
     }
 
-    private bool IsStepComplete(Step s)
+    private bool IsStepReadyToUnlock(Step s)
     {
         if (s.requiredFlags == null || s.requiredFlags.Count == 0)
             return false;
@@ -126,75 +144,72 @@ public sealed class ScenarioDirector : MonoBehaviour
             if (!_flags.Contains(req))
                 return false;
         }
-
         return true;
     }
 
-    private void ChangeStep(int newIndex)
+    private void UnlockStep(int index)
     {
-        if (newIndex == _stepIndex) return;
+        _unlocked[index] = true;
+        _currentStepIndex = Mathf.Max(_currentStepIndex, index);
 
-        Step oldStep = steps[_stepIndex];
-        if (log) Debug.Log($"[Scenario] Exit step {_stepIndex}: {oldStep.name}", this);
-        oldStep.onExit?.Invoke();
+        if (log) Debug.Log($"[Scenario] Step UNLOCKED: {index} ({steps[index].name})", this);
 
-        _stepIndex = Mathf.Clamp(newIndex, 0, steps.Count - 1);
+        ApplyUnlockState();
 
-        ApplyStepActivation(initial: false);
-
-        StepChanged?.Invoke(_stepIndex);
-
-        if (log) Debug.Log($"[Scenario] Enter step {_stepIndex}: {steps[_stepIndex].name}", this);
-        steps[_stepIndex].onEnter?.Invoke();
+        steps[index].onUnlocked?.Invoke();
+        StepUnlocked?.Invoke(index);
     }
 
-    private void ApplyStepActivation(bool initial)
+    private void ApplyUnlockState()
     {
-        // Simple rule: ONLY the active step’s mechanics are enabled.
-        // Everything in other steps gets disabled.
+        // Enable everything that belongs to unlocked steps.
+        // Keep everything else disabled (locked).
         for (int si = 0; si < steps.Count; si++)
         {
-            bool active = (si == _stepIndex);
+            bool unlocked = _unlocked != null && si < _unlocked.Length && _unlocked[si];
             Step s = steps[si];
 
-            // behaviours
+            // Behaviours
             if (s.enableBehaviours != null)
             {
                 for (int i = 0; i < s.enableBehaviours.Count; i++)
                 {
                     var b = s.enableBehaviours[i];
-                    if (b != null) b.enabled = active;
+                    if (b != null) b.enabled = unlocked;
                 }
             }
 
-            // objects enabled
+            // Objects enabled when unlocked
             if (s.enableObjects != null)
             {
                 for (int i = 0; i < s.enableObjects.Count; i++)
                 {
                     var go = s.enableObjects[i];
-                    if (go != null) go.SetActive(active);
+                    if (go != null) go.SetActive(unlocked);
                 }
             }
 
-            // objects forced off while active
-            if (active && s.forceOffObjects != null)
+            // Objects forced off until unlocked
+            if (!unlocked && s.forceOffUntilUnlocked != null)
             {
-                for (int i = 0; i < s.forceOffObjects.Count; i++)
+                for (int i = 0; i < s.forceOffUntilUnlocked.Count; i++)
                 {
-                    var go = s.forceOffObjects[i];
+                    var go = s.forceOffUntilUnlocked[i];
                     if (go != null) go.SetActive(false);
                 }
             }
         }
-
-        if (initial && log)
-            Debug.Log($"[Scenario] Initial step: {_stepIndex} ({CurrentStepName})", this);
     }
 
     private static string Normalize(string s) => string.IsNullOrWhiteSpace(s) ? string.Empty : s.Trim();
 
-    // Optional testing buttons you can call from UnityEvents
-    public void DebugAdvanceStep() => ChangeStep(Mathf.Min(_stepIndex + 1, steps.Count - 1));
+    // Debug helpers
     public void DebugRaiseFlag(string f) => RaiseFlag(f);
+
+    public bool IsStepUnlocked(int stepIndex)
+    {
+        if (_unlocked == null) return false;
+        if (stepIndex < 0 || stepIndex >= _unlocked.Length) return false;
+        return _unlocked[stepIndex];
+    }
 }

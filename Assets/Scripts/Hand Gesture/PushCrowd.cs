@@ -1,65 +1,99 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 [DisallowMultipleComponent]
-public sealed class PushAwayCubes : MonoBehaviour
+public sealed class SendCrowdToExit : MonoBehaviour
 {
-    [Header("Origin (where you want space)")]
-    [Tooltip("Usually the victim/chest center. If null, uses this transform.")]
+    [Header("Origin (what area we clear)")]
+    [Tooltip("Usually victim/chest center. If null, uses this transform.")]
     [SerializeField] private Transform origin;
 
-    [Header("Which objects get pushed")]
-    [Tooltip("Put your cubes on a dedicated layer (recommended).")]
-    [SerializeField] private LayerMask pushableLayers;
+    [Header("Who is affected")]
+    [Tooltip("Put crowd NPC roots on a dedicated layer (recommended).")]
+    [SerializeField] private LayerMask crowdLayers;
 
     [SerializeField, Min(0.1f)] private float radius = 2.5f;
 
-    [Header("Push Settings")]
-    [SerializeField, Min(0f)] private float pushForce = 3.0f;
-    [SerializeField, Min(0f)] private float upwardForce = 0.2f;
+    [Header("Exit")]
+    [Tooltip("Where NPCs should go when cleared. MUST be on the NavMesh if using agents.")]
+    [SerializeField] private Transform exitPoint;
 
-    [Tooltip("If true, pushes only on the horizontal plane (looks nicer).")]
-    [SerializeField] private bool flattenY = true;
+    [Header("Optional: Scenario flag")]
+    [SerializeField] private ScenarioDirector scenario;
+    [SerializeField] private bool raiseCrowdClearedFlag = true;
+    [SerializeField] private string crowdClearedFlag = "CrowdCleared";
 
-    [Tooltip("If a cube has no Rigidbody, we still move it a bit.")]
-    [SerializeField, Min(0f)] private float fallbackMoveDistance = 0.7f;
+    [Header("Fallback if no NavMeshAgent")]
+    [SerializeField] private float fallbackMoveDistance = 3.0f;
+
+    [Header("Debug")]
+    [SerializeField] private bool log = false;
 
     // Non-alloc overlap (avoid garbage)
     private readonly Collider[] _hits = new Collider[64];
+
+    private void Awake()
+    {
+        if (scenario == null)
+            scenario = FindFirstObjectByType<ScenarioDirector>();
+    }
 
     public void MakeSpace()
     {
         Transform o = origin != null ? origin : transform;
         Vector3 center = o.position;
 
-        int count = Physics.OverlapSphereNonAlloc(center, radius, _hits, pushableLayers, QueryTriggerInteraction.Ignore);
+        int count = Physics.OverlapSphereNonAlloc(center, radius, _hits, crowdLayers, QueryTriggerInteraction.Ignore);
+
+        if (exitPoint == null)
+        {
+            Debug.LogError("[SendCrowdToExit] exitPoint is NULL. Assign an exit point.", this);
+            return;
+        }
 
         for (int i = 0; i < count; i++)
         {
             Collider c = _hits[i];
             if (c == null) continue;
 
-            Rigidbody rb = c.attachedRigidbody;
+            // Find a sensible root (NPC parent)
+            Transform root = c.attachedRigidbody != null ? c.attachedRigidbody.transform : c.transform;
 
-            Vector3 dir = (c.transform.position - center);
-            if (flattenY) dir.y = 0f;
+            // Prefer NavMeshAgent if present anywhere on the NPC
+            NavMeshAgent agent = root.GetComponentInParent<NavMeshAgent>();
+            if (agent == null) agent = root.GetComponentInChildren<NavMeshAgent>();
 
-            if (dir.sqrMagnitude < 0.0001f)
-                dir = o.forward;
-
-            dir.Normalize();
-
-            if (rb != null && !rb.isKinematic)
+            if (agent != null && agent.enabled)
             {
-                // Push with physics
-                Vector3 force = dir * pushForce + Vector3.up * upwardForce;
-                rb.AddForce(force, ForceMode.VelocityChange);
+                // Let navmesh drive movement (don’t fight with physics)
+                Rigidbody rb = root.GetComponentInChildren<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.isKinematic = true;
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
+
+                agent.isStopped = false;
+                agent.ResetPath();
+                agent.SetDestination(exitPoint.position);
+
+                if (log) Debug.Log($"[SendCrowdToExit] Sent {root.name} to exit.", root);
             }
             else
             {
-                // Fallback: move transform a bit
-                c.transform.position += dir * fallbackMoveDistance;
+                // Fallback: move away from the origin
+                Vector3 dir = (root.position - center);
+                dir.y = 0f;
+                if (dir.sqrMagnitude < 0.0001f) dir = o.forward;
+                dir.Normalize();
+
+                root.position += dir * fallbackMoveDistance;
             }
         }
+
+        if (raiseCrowdClearedFlag && scenario != null)
+            scenario.RaiseFlag(crowdClearedFlag);
     }
 
 #if UNITY_EDITOR
@@ -68,7 +102,12 @@ public sealed class PushAwayCubes : MonoBehaviour
         Transform o = origin != null ? origin : transform;
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(o.position, radius);
+
+        if (exitPoint != null)
+        {
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawWireSphere(exitPoint.position, 0.2f);
+        }
     }
 #endif
 }
-    
