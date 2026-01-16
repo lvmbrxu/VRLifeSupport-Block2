@@ -15,7 +15,6 @@ public sealed class CprChestController : MonoBehaviour
     [SerializeField, Min(0f)] private float minDepthToCount = 0.01f;
 
     private Vector3 _chestOriginalLocalPos;
-    private Vector3 _chestOriginalWorldPos;
 
     private float _currentCompression;
     private float _velocity;
@@ -26,8 +25,8 @@ public sealed class CprChestController : MonoBehaviour
     private bool _wasInZone;
 
     /// <summary>
-    /// World-space offset of the chest plate from its original position.
-    /// This is what you add to your pinned CPR pose to make it "sink" with the chest.
+    /// World-space offset caused ONLY by compression (safe even if the victim moves).
+    /// Add this to your pinned CPR pose so it "sinks" with the chest.
     /// </summary>
     public Vector3 ChestWorldOffset { get; private set; }
 
@@ -36,8 +35,12 @@ public sealed class CprChestController : MonoBehaviour
         if (chestPlate == null) return;
 
         _chestOriginalLocalPos = chestPlate.localPosition;
-        _chestOriginalWorldPos = chestPlate.position;
         ChestWorldOffset = Vector3.zero;
+
+        _currentCompression = 0f;
+        _velocity = 0f;
+
+        ResetTrackingInternal();
     }
 
     /// <summary>
@@ -47,9 +50,7 @@ public sealed class CprChestController : MonoBehaviour
     public bool UpdateCompression(Vector3 handsCenter, bool inCprZone, float dt, out float depthReached)
     {
         depthReached = 0f;
-
-        if (chestPlate == null)
-            return false;
+        if (chestPlate == null) return false;
 
         if (inCprZone)
         {
@@ -69,7 +70,7 @@ public sealed class CprChestController : MonoBehaviour
                 float targetCompression = Mathf.Clamp(currentDepth, 0f, maxCompression);
                 float diff = targetCompression - _currentCompression;
 
-                // Inject force based on how far behind we are.
+                // Inject force based on how far behind the spring is.
                 _velocity += diff * chestStiffness * dt;
             }
 
@@ -91,24 +92,28 @@ public sealed class CprChestController : MonoBehaviour
 
     public void UpdatePhysics(float dt)
     {
-        if (chestPlate == null)
-            return;
+        if (chestPlate == null) return;
 
-        // Spring back to zero compression.
+        // Spring back to zero compression
         float springForce = -_currentCompression * chestStiffness;
         _velocity += springForce * dt;
 
-        // Stable damping (frame-rate independent)
+        // Frame-rate independent damping
         float dampingFactor = Mathf.Exp(-chestDamping * dt);
         _velocity *= dampingFactor;
 
         _currentCompression += _velocity * dt;
         _currentCompression = Mathf.Clamp(_currentCompression, 0f, maxCompression);
 
+        // Apply locally (stable)
         chestPlate.localPosition = _chestOriginalLocalPos - Vector3.up * _currentCompression;
 
-        // Update world offset after we've moved the chest
-        ChestWorldOffset = chestPlate.position - _chestOriginalWorldPos;
+        // Compute WORLD offset due ONLY to compression (robust if victim animates/moves)
+        Vector3 localOffset = -Vector3.up * _currentCompression;
+        if (chestPlate.parent != null)
+            ChestWorldOffset = chestPlate.parent.TransformVector(localOffset);
+        else
+            ChestWorldOffset = localOffset;
     }
 
     public void ResetTracking()

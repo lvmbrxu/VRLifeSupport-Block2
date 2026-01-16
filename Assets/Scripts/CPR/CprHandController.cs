@@ -22,8 +22,7 @@ public sealed class CprHandController : MonoBehaviour
     [Tooltip("Optional snap/lock point for CPR pose on the chest.")]
     [SerializeField] private Transform cprPoseAnchor;
 
-    [SerializeField, Min(0.00001f)]
-    private float insideEpsilon = 0.001f;
+    [SerializeField, Min(0.00001f)] private float insideEpsilon = 0.001f;
 
     [Header("Pose Feel")]
     [Tooltip("How snappy the CPR pose follows chest movement (higher = snappier).")]
@@ -37,16 +36,17 @@ public sealed class CprHandController : MonoBehaviour
     private Vector3 _lockedPos;
     private Quaternion _lockedRot;
 
-    // Chest offset injected by CprSystem each FixedUpdate
     private Vector3 _chestWorldOffset;
-
-    // For smoothing (no GC)
     private Vector3 _poseVel;
 
-    public void SetChestWorldOffset(Vector3 offset)
+    private float _overlapDistSqr;
+
+    private void Awake()
     {
-        _chestWorldOffset = offset;
+        _overlapDistSqr = handOverlapDistance * handOverlapDistance;
     }
+
+    public void SetChestWorldOffset(Vector3 offset) => _chestWorldOffset = offset;
 
     public void Tick(float dt)
     {
@@ -61,8 +61,9 @@ public sealed class CprHandController : MonoBehaviour
 
         HandsCenter = (leftHand.position + rightHand.position) * 0.5f;
 
-        float dist = Vector3.Distance(leftHand.position, rightHand.position);
-        HandsOverlapped = dist < handOverlapDistance;
+        // PERF: no sqrt
+        Vector3 d = leftHand.position - rightHand.position;
+        HandsOverlapped = d.sqrMagnitude < _overlapDistSqr;
 
         IsInCprZone = (cprZone == null) ? true : IsPointInsideCollider(cprZone, HandsCenter);
 
@@ -77,6 +78,7 @@ public sealed class CprHandController : MonoBehaviour
 
     private void SetCprActive(bool active)
     {
+        if (IsCprActive == active) return;
         IsCprActive = active;
 
         if (active)
@@ -90,7 +92,7 @@ public sealed class CprHandController : MonoBehaviour
             else
             {
                 _lockedPos = HandsCenter;
-                _lockedRot = leftHand != null ? leftHand.rotation : Quaternion.identity;
+                _lockedRot = leftHand.rotation;
             }
 
             if (leftHandVisual != null) leftHandVisual.SetActive(false);
@@ -116,11 +118,9 @@ public sealed class CprHandController : MonoBehaviour
         if (cprHandsPose == null || !cprHandsPose.activeSelf)
             return;
 
-        // Target is "locked on entry" + chest compression offset
         Vector3 targetPos = _lockedPos + _chestWorldOffset;
         Quaternion targetRot = _lockedRot;
 
-        // SmoothDamp gives a nice “stiffness” feel instead of jittery snapping
         if (poseFollowChestSharpness > 0f)
         {
             float smoothTime = 1f / poseFollowChestSharpness;

@@ -23,12 +23,12 @@ public sealed class CprSystem : MonoBehaviour
     private float _lastCompressionTime = -999f;
     private float _nextRateUiTime;
 
+    // cached from Update (hand tracking)
     private Vector3 _handsCenter;
     private bool _cprActive;
 
     private void Awake()
     {
-        // Safe wiring without Find()
         if (handController == null) handController = GetComponentInChildren<CprHandController>(true);
         if (chestController == null) chestController = GetComponentInChildren<CprChestController>(true);
         if (ecgDisplay == null) ecgDisplay = GetComponentInChildren<CprEcgDisplay>(true);
@@ -36,7 +36,6 @@ public sealed class CprSystem : MonoBehaviour
 
         _data = new CprData(bpmMovingAverageWindow);
 
-        // Push ideals to dependent systems (keeps inspector cleaner)
         if (ecgDisplay != null)
         {
             ecgDisplay.IdealDepth = idealDepth;
@@ -44,9 +43,7 @@ public sealed class CprSystem : MonoBehaviour
         }
 
         if (uiDisplay != null)
-        {
             uiDisplay.IdealBpm = idealBpm;
-        }
     }
 
     private void Start()
@@ -62,18 +59,13 @@ public sealed class CprSystem : MonoBehaviour
         if (handController == null || chestController == null)
             return;
 
+        // Hand tracking in Update (best for XR hands)
         handController.Tick(dt);
 
         _handsCenter = handController.HandsCenter;
         _cprActive = handController.IsCprActive;
 
-        // Compression detection & input force accumulation
-        if (chestController.UpdateCompression(_handsCenter, _cprActive, dt, out float depthReached))
-        {
-            OnCompressionCompleted(depthReached);
-        }
-
-        // UI rate display (actual BPM over elapsed time), throttled
+        // UI rate display throttled
         if (uiDisplay != null && Time.time >= _nextRateUiTime)
         {
             _nextRateUiTime = Time.time + uiRateUpdateInterval;
@@ -85,17 +77,24 @@ public sealed class CprSystem : MonoBehaviour
     {
         if (chestController == null) return;
 
-        chestController.UpdatePhysics(Time.fixedDeltaTime);
+        float dt = Time.fixedDeltaTime;
 
-        // NEW: make CPR pose sink with the chest
+        // Detect compressions + inject spring force deterministically in FixedUpdate
+        if (chestController.UpdateCompression(_handsCenter, _cprActive, dt, out float depthReached))
+            OnCompressionCompleted(depthReached);
+
+        // Advance chest spring
+        chestController.UpdatePhysics(dt);
+
+        // Make CPR pose sink with chest
         if (handController != null)
             handController.SetChestWorldOffset(chestController.ChestWorldOffset);
     }
 
     private void LateUpdate()
     {
-        if (ecgDisplay == null) return;
-        ecgDisplay.UpdateDisplay(Time.deltaTime);
+        if (ecgDisplay != null)
+            ecgDisplay.UpdateDisplay(Time.deltaTime);
     }
 
     private void OnCompressionCompleted(float depth)
@@ -104,9 +103,11 @@ public sealed class CprSystem : MonoBehaviour
         float dt = now - _lastCompressionTime;
         _lastCompressionTime = now;
 
-        // BPM only valid after some reps and with sane timing.
+        // FIX: use +1 because RecordCompression increments count
+        int nextCompressionIndex = _data.CompressionCount + 1;
+
         float bpm = 0f;
-        if (_data.CompressionCount >= compressionsBeforeBpm && dt >= minSecondsBetweenCompressions)
+        if (nextCompressionIndex >= compressionsBeforeBpm && dt >= minSecondsBetweenCompressions)
             bpm = 60f / dt;
 
         _data.RecordCompression(depth, bpm);
@@ -136,4 +137,17 @@ public sealed class CprSystem : MonoBehaviour
         var quality = CprQualityCalculator.CalculateQuality(avgBpm, avgDepth, idealBpm, idealDepth);
         uiDisplay.UpdateQualityDisplay(quality);
     }
+
+    // ===== Results API =====
+    public int CompressionCount => _data != null ? _data.CompressionCount : 0;
+    public float AvgBpm => _data != null ? _data.GetAverageBpm() : 0f;
+    public float AvgDepthMeters => _data != null ? _data.GetAverageDepth() : 0f;
+
+    public CprQualityCalculator.QualityResult GetQualityResult()
+    {
+        return CprQualityCalculator.CalculateQuality(AvgBpm, AvgDepthMeters, idealBpm, idealDepth);
+    }
+
+    
+
 }
