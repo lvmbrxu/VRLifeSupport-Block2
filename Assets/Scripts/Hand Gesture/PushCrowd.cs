@@ -5,31 +5,32 @@ using UnityEngine.AI;
 public sealed class SendCrowdToExit : MonoBehaviour
 {
     [Header("Origin (what area we clear)")]
-    [Tooltip("Usually victim/chest center. If null, uses this transform.")]
+    [Tooltip("Usually the victim/chest center. If null, uses this transform.")]
     [SerializeField] private Transform origin;
 
     [Header("Who is affected")]
-    [Tooltip("Put crowd NPC roots on a dedicated layer (recommended).")]
     [SerializeField] private LayerMask crowdLayers;
-
     [SerializeField, Min(0.1f)] private float radius = 2.5f;
 
     [Header("Exit")]
-    [Tooltip("Where NPCs should go when cleared. MUST be on the NavMesh if using agents.")]
     [SerializeField] private Transform exitPoint;
 
-    [Header("Optional: Scenario flag")]
+    [Header("Scenario Gate")]
     [SerializeField] private ScenarioDirector scenario;
+
+    [Tooltip("If set, MakeSpace will only work AFTER this flag is raised.")]
+    [SerializeField] private string requiredFlag = "CrowdArrived";
+
+    [Header("Optional: Scenario flag")]
     [SerializeField] private bool raiseCrowdClearedFlag = true;
     [SerializeField] private string crowdClearedFlag = "CrowdCleared";
 
     [Header("Fallback if no NavMeshAgent")]
-    [SerializeField] private float fallbackMoveDistance = 3.0f;
+    [SerializeField] private float fallbackMoveDistance = 1.5f;
 
     [Header("Debug")]
     [SerializeField] private bool log = false;
 
-    // Non-alloc overlap (avoid garbage)
     private readonly Collider[] _hits = new Collider[64];
 
     private void Awake()
@@ -40,10 +41,15 @@ public sealed class SendCrowdToExit : MonoBehaviour
 
     public void MakeSpace()
     {
-        Transform o = origin != null ? origin : transform;
-        Vector3 center = o.position;
-
-        int count = Physics.OverlapSphereNonAlloc(center, radius, _hits, crowdLayers, QueryTriggerInteraction.Ignore);
+        // ---- HARD GATE (fixes your issue) ----
+        if (scenario != null && !string.IsNullOrWhiteSpace(requiredFlag))
+        {
+            if (!scenario.HasFlag(requiredFlag.Trim()))
+            {
+                if (log) Debug.Log($"[SendCrowdToExit] Blocked. Missing flag: {requiredFlag}", this);
+                return;
+            }
+        }
 
         if (exitPoint == null)
         {
@@ -51,21 +57,24 @@ public sealed class SendCrowdToExit : MonoBehaviour
             return;
         }
 
+        Transform o = origin != null ? origin : transform;
+        Vector3 center = o.position;
+
+        int count = Physics.OverlapSphereNonAlloc(center, radius, _hits, crowdLayers, QueryTriggerInteraction.Ignore);
+
         for (int i = 0; i < count; i++)
         {
             Collider c = _hits[i];
             if (c == null) continue;
 
-            // Find a sensible root (NPC parent)
             Transform root = c.attachedRigidbody != null ? c.attachedRigidbody.transform : c.transform;
 
-            // Prefer NavMeshAgent if present anywhere on the NPC
             NavMeshAgent agent = root.GetComponentInParent<NavMeshAgent>();
             if (agent == null) agent = root.GetComponentInChildren<NavMeshAgent>();
 
             if (agent != null && agent.enabled)
             {
-                // Let navmesh drive movement (don’t fight with physics)
+                // Prevent physics from fighting the agent
                 Rigidbody rb = root.GetComponentInChildren<Rigidbody>();
                 if (rb != null)
                 {
@@ -74,20 +83,20 @@ public sealed class SendCrowdToExit : MonoBehaviour
                     rb.angularVelocity = Vector3.zero;
                 }
 
+                if (!agent.isOnNavMesh && NavMesh.SamplePosition(agent.transform.position, out var hit, 2f, NavMesh.AllAreas))
+                    agent.Warp(hit.position);
+
                 agent.isStopped = false;
                 agent.ResetPath();
                 agent.SetDestination(exitPoint.position);
-
-                if (log) Debug.Log($"[SendCrowdToExit] Sent {root.name} to exit.", root);
             }
             else
             {
-                // Fallback: move away from the origin
+                // fallback shove
                 Vector3 dir = (root.position - center);
                 dir.y = 0f;
                 if (dir.sqrMagnitude < 0.0001f) dir = o.forward;
                 dir.Normalize();
-
                 root.position += dir * fallbackMoveDistance;
             }
         }

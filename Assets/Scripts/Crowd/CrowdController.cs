@@ -5,6 +5,14 @@ using UnityEngine.AI;
 
 public sealed class CrowdDistractionController : MonoBehaviour
 {
+    [System.Serializable]
+    public sealed class NpcVoice
+    {
+        public GameObject npcRoot;
+        public AudioSource audioSource;
+        public List<AudioClip> clips = new List<AudioClip>();
+    }
+
     [Header("Scenario")]
     [SerializeField] private ScenarioDirector scenario;
     [SerializeField] private string startFlag = "DogHandled";
@@ -21,10 +29,6 @@ public sealed class CrowdDistractionController : MonoBehaviour
     [Header("Exit")]
     [SerializeField] private Transform exitPoint;
 
-    [Header("Audio")]
-    [SerializeField] private AudioSource crowdAudio;
-    [SerializeField] private AudioClip crowdLoopClip;
-
     [Header("Timing")]
     [SerializeField] private float minDelay = 2f;
     [SerializeField] private float maxDelay = 6f;
@@ -36,19 +40,43 @@ public sealed class CrowdDistractionController : MonoBehaviour
     [SerializeField] private bool raiseCrowdArrivedFlag = true;
     [SerializeField] private string crowdArrivedFlag = "CrowdArrived";
 
+    [Header("Crowd Loop Audio (optional ambience)")]
+    [SerializeField] private AudioSource crowdAudio;
+    [SerializeField] private AudioClip crowdLoopClip;
+
+    [Header("Staggered NPC Voice Lines")]
+    [Tooltip("Fill this for per-NPC voice lines. If empty, controller will try to auto-find AudioSources on npcRoots.")]
+    [SerializeField] private List<NpcVoice> npcVoices = new List<NpcVoice>();
+
+    [Tooltip("Start VO lines when CrowdArrived is raised.")]
+    [SerializeField] private bool playVoicesOnArrived = true;
+
+    [Tooltip("Delay before first VO line after crowd arrives.")]
+    [SerializeField] private float voiceStartDelay = 0.2f;
+
+    [Tooltip("Time between each NPC speaking (random range).")]
+    [SerializeField] private Vector2 voiceStaggerRange = new Vector2(0.4f, 1.2f);
+
+    [Tooltip("If true, continues chatter in a loop until cleared.")]
+    [SerializeField] private bool loopChatter = true;
+
+    [Tooltip("If looping, wait random time between 'rounds' of chatter.")]
+    [SerializeField] private Vector2 chatterRoundPauseRange = new Vector2(2.0f, 5.0f);
+
     [Header("Debug")]
     [SerializeField] private bool log = true;
 
     private bool started;
     private bool clearing;
     private Coroutine routine;
+    private Coroutine voiceRoutine;
 
     private void Awake()
     {
         if (scenario == null)
             scenario = FindFirstObjectByType<ScenarioDirector>();
 
-        // start hidden
+        // Start hidden
         for (int i = 0; i < npcRoots.Count; i++)
             if (npcRoots[i] != null) npcRoots[i].SetActive(false);
 
@@ -109,28 +137,38 @@ public sealed class CrowdDistractionController : MonoBehaviour
             var agent = npc.GetComponentInChildren<NavMeshAgent>(true);
             if (agent != null && agent.enabled)
             {
+                if (!agent.isOnNavMesh && NavMesh.SamplePosition(agent.transform.position, out var hit, 2f, NavMesh.AllAreas))
+                    agent.Warp(hit.position);
+
                 agent.isStopped = false;
+                agent.ResetPath();
                 agent.SetDestination(slot.position);
             }
             else
             {
-                // fallback teleport if no agent
-                npc.transform.position = slot.position;
-                npc.transform.rotation = slot.rotation;
+                npc.transform.SetPositionAndRotation(slot.position, slot.rotation);
             }
         }
 
-        // Start noise once they begin arriving
         StartCrowdAudio();
 
         // Wait until all arrived (or until cleared)
         while (!clearing && !AllArrived())
             yield return null;
 
-        if (!clearing && raiseCrowdArrivedFlag)
+        if (clearing) yield break;
+
+        if (raiseCrowdArrivedFlag)
             scenario.RaiseFlag(crowdArrivedFlag);
 
-        // idle until cleared
+        // Start staggered VO
+        if (playVoicesOnArrived)
+        {
+            if (voiceRoutine != null) StopCoroutine(voiceRoutine);
+            voiceRoutine = StartCoroutine(VoicesRoutine());
+        }
+
+        // Idle until cleared
         while (!clearing)
             yield return null;
     }
@@ -139,27 +177,88 @@ public sealed class CrowdDistractionController : MonoBehaviour
     {
         if (log) Debug.Log("[Crowd] Clearing crowd", this);
 
+        // Stop chatter immediately
+        if (voiceRoutine != null)
+        {
+            StopCoroutine(voiceRoutine);
+            voiceRoutine = null;
+        }
+
         StopCrowdAudio();
 
         // Send them away
         for (int i = 0; i < npcRoots.Count; i++)
         {
             var npc = npcRoots[i];
-            if (npc == null) continue;
+            if (npc == null || !npc.activeSelf) continue;
 
             var agent = npc.GetComponentInChildren<NavMeshAgent>(true);
             if (agent != null && agent.enabled && exitPoint != null)
             {
                 agent.isStopped = false;
+                agent.ResetPath();
                 agent.SetDestination(exitPoint.position);
             }
         }
 
-        // Wait a little then hide (simple)
+        // Simple hide after a bit
         yield return new WaitForSeconds(2.5f);
 
         for (int i = 0; i < npcRoots.Count; i++)
             if (npcRoots[i] != null) npcRoots[i].SetActive(false);
+    }
+
+    private IEnumerator VoicesRoutine()
+    {
+        if (voiceStartDelay > 0f)
+            yield return new WaitForSeconds(voiceStartDelay);
+
+        // Build voice list if empty (auto-find AudioSources)
+        if (npcVoices == null || npcVoices.Count == 0)
+        {
+            npcVoices = new List<NpcVoice>(npcRoots.Count);
+            for (int i = 0; i < npcRoots.Count; i++)
+            {
+                var npc = npcRoots[i];
+                if (npc == null) continue;
+                npcVoices.Add(new NpcVoice
+                {
+                    npcRoot = npc,
+                    audioSource = npc.GetComponentInChildren<AudioSource>(true),
+                    clips = new List<AudioClip>() // you must assign clips if using auto mode
+                });
+            }
+
+            if (log)
+                Debug.Log("[Crowd] npcVoices list was empty. Auto-found AudioSources, but you still need to assign clips.", this);
+        }
+
+        while (!clearing)
+        {
+            // One "round" of chatter: NPCs talk one-by-one with random stagger
+            for (int i = 0; i < npcVoices.Count; i++)
+            {
+                if (clearing) yield break;
+
+                var v = npcVoices[i];
+                if (v == null || v.npcRoot == null || !v.npcRoot.activeSelf) continue;
+                if (v.audioSource == null) continue;
+                if (v.clips == null || v.clips.Count == 0) continue;
+
+                float gap = Random.Range(voiceStaggerRange.x, voiceStaggerRange.y);
+                if (gap > 0f) yield return new WaitForSeconds(gap);
+
+                // Play random clip
+                var clip = v.clips[Random.Range(0, v.clips.Count)];
+                if (clip != null)
+                    v.audioSource.PlayOneShot(clip);
+            }
+
+            if (!loopChatter) yield break;
+
+            float pause = Random.Range(chatterRoundPauseRange.x, chatterRoundPauseRange.y);
+            if (pause > 0f) yield return new WaitForSeconds(pause);
+        }
     }
 
     private bool AllArrived()

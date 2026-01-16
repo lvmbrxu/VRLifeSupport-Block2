@@ -82,7 +82,6 @@ public sealed class TwoHandStopPushGestureXRHands : MonoBehaviour
             _armTimer = 0f;
             return;
         }
-
         if (!TryGetPalmPose(left, out Vector3 leftPalmPos, out Vector3 leftPalmNormal) ||
             !TryGetPalmPose(right, out Vector3 rightPalmPos, out Vector3 rightPalmNormal))
         {
