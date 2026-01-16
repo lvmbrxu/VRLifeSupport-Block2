@@ -1,6 +1,7 @@
 using UnityEngine;
 
-public sealed class PointAtRequester : MonoBehaviour
+[DisallowMultipleComponent]
+public sealed class PointRayOrigin : MonoBehaviour
 {
     [Header("Ray")]
     [SerializeField] private Transform rayOrigin;
@@ -12,13 +13,17 @@ public sealed class PointAtRequester : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] private bool drawRay = true;
+    [SerializeField] private bool log = false;
 
     private float _holdTimer;
-    private RequestAedTarget _currentTarget;
+    private PointFlagMoveTarget _current;
 
-    private void Reset()
+    private void Reset() => rayOrigin = transform;
+
+    private void Awake()
     {
-        rayOrigin = transform;
+        if (rayOrigin == null)
+            rayOrigin = transform;
     }
 
     private void Update()
@@ -26,41 +31,36 @@ public sealed class PointAtRequester : MonoBehaviour
         if (rayOrigin == null) return;
 
         Ray ray = new Ray(rayOrigin.position, rayOrigin.forward);
-
-        if (drawRay)
-            Debug.DrawRay(ray.origin, ray.direction * maxDistance);
+        if (drawRay) Debug.DrawRay(ray.origin, ray.direction * maxDistance);
 
         if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, hitMask, QueryTriggerInteraction.Ignore))
         {
-            var target = hit.collider.GetComponentInParent<RequestAedTarget>();
+            var target = hit.collider.GetComponentInParent<PointFlagMoveTarget>();
 
-            if (target != null)
+            if (target != null && target.CanInteract())
             {
-                // Same target -> accumulate hold time
-                if (target == _currentTarget)
-                {
+                if (target == _current)
                     _holdTimer += Time.deltaTime;
-                }
                 else
                 {
-                    _currentTarget = target;
+                    _current = target;
                     _holdTimer = 0f;
                 }
 
-                // Confirm
                 if (_holdTimer >= holdSeconds)
                 {
+                    if (log) Debug.Log($"[PointRayOrigin] Confirm -> {target.name}", target);
+
                     _holdTimer = 0f;
-                    _currentTarget.ConfirmRequest();
-                    _currentTarget = null; // require re-pointing
+                    target.Confirm();
+                    _current = null; // require re-pointing
                 }
 
                 return;
             }
         }
 
-        // Not hitting a valid target
-        _currentTarget = null;
+        _current = null;
         _holdTimer = 0f;
     }
 }

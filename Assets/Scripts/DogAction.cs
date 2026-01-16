@@ -37,6 +37,10 @@ public sealed class DogDistractionController : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] private bool log = true;
+    
+    [SerializeField] private string arrivedFlag = "DogArrived";
+    private bool _arrivedRaised;
+
 
     private Coroutine routine;
     private bool started;
@@ -129,8 +133,15 @@ public sealed class DogDistractionController : MonoBehaviour
 
         if (leaving) yield break;
 
+        if (!_arrivedRaised && scenario != null)
+        {
+            _arrivedRaised = true;
+            scenario.RaiseFlag(arrivedFlag);
+        }
+
         // Arrived: start barking (anim + loop audio)
         SetBarking(true);
+
 
         // Stay barking until leaving becomes true (gesture flag)
         while (!leaving)
