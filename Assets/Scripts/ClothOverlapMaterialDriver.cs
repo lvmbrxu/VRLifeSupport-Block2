@@ -51,9 +51,6 @@ public class ClothOverlapMaterialDriver : MonoBehaviour
         characterStage = stage;
         overlapping = true;
         timer = 0f;
-
-        clothStage.ResetStage();
-        characterStage.ResetStage();
     }
 
     void OnTriggerExit(Collider other)
