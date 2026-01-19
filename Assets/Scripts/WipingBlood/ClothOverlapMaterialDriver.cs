@@ -20,7 +20,6 @@ public class ClothOverlapMaterialDriver : MonoBehaviour
         col.isTrigger = true;
 
         var rb = GetComponent<Rigidbody>();
-        rb.isKinematic = true;
     }
 
     void Update()
