@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Events;
 
 [DisallowMultipleComponent]
 public sealed class PointFlagMoveTarget : MonoBehaviour
@@ -38,6 +39,26 @@ public sealed class PointFlagMoveTarget : MonoBehaviour
 
     [SerializeField] private float arriveDistance = 0.7f;
 
+    [Header("Animator (Optional)")]
+    [Tooltip("If null, will try to find an Animator in this object or children.")]
+    [SerializeField] private Animator animator;
+
+    [Tooltip("Bool parameter set TRUE while moving and FALSE when arrived. Leave empty to disable.")]
+    [SerializeField] private string movingBoolParam = "IsWalking";
+
+    [Tooltip("Optional float param for speed (blend trees). Leave empty to disable.")]
+    [SerializeField] private string speedFloatParam = "";
+
+    [Tooltip("Minimum speed before we consider this 'moving' for animation.")]
+    [SerializeField] private float movingSpeedThreshold = 0.05f;
+
+    [Header("Facing (Optional)")]
+    [Tooltip("If assigned, we rotate this transform to face movement direction (use your visual root, not the agent root).")]
+    [SerializeField] private Transform visualRootToRotate;
+
+    [Tooltip("How fast to rotate toward movement direction.")]
+    [SerializeField] private float turnSpeed = 720f;
+
     [Header("Audio (Optional)")]
     [Tooltip("If null, will try to find an AudioSource in this object or children.")]
     [SerializeField] private AudioSource audioSource;
@@ -47,11 +68,15 @@ public sealed class PointFlagMoveTarget : MonoBehaviour
     [Tooltip("Delay before playing confirmClip after confirm.")]
     [SerializeField] private float audioDelaySeconds = 0.2f;
 
+    [Header("Events")]
+    public UnityEvent onConfirmed; // invoked right after confirmClip (if any)
+
     [Header("Debug")]
     [SerializeField] private bool log = false;
 
     private bool _done;
     private Coroutine _routine;
+    private Coroutine _arriveRoutine;
 
     private void Awake()
     {
@@ -61,17 +86,51 @@ public sealed class PointFlagMoveTarget : MonoBehaviour
         if (agent == null)
             agent = GetComponentInChildren<NavMeshAgent>(true);
 
+        if (animator == null)
+            animator = GetComponentInChildren<Animator>(true);
+
         if (audioSource == null)
             audioSource = GetComponentInChildren<AudioSource>(true);
 
         if (audioSource != null)
             audioSource.playOnAwake = false;
+
+        // Ensure idle state at start
+        SetMovingAnim(false);
+    }
+
+    private void Update()
+    {
+        // Optional: feed speed float continuously for blend trees
+        if (animator != null && agent != null && agent.enabled && !string.IsNullOrWhiteSpace(speedFloatParam))
+        {
+            animator.SetFloat(speedFloatParam, agent.velocity.magnitude);
+        }
+
+        // Optional: rotate visual to face velocity direction (prevents moon-walking if rig is OK)
+        if (visualRootToRotate != null && agent != null && agent.enabled)
+        {
+            Vector3 v = agent.velocity;
+            v.y = 0f;
+
+            if (v.sqrMagnitude > 0.0001f)
+            {
+                Quaternion target = Quaternion.LookRotation(v.normalized, Vector3.up);
+                visualRootToRotate.rotation = Quaternion.RotateTowards(
+                    visualRootToRotate.rotation,
+                    target,
+                    turnSpeed * Time.deltaTime
+                );
+            }
+        }
     }
 
     public bool CanInteract()
     {
         if (_done && onlyOnce) return false;
-        if (scenario == null) return false;
+
+        // If you ever run without scenario, allow it (handy for testing)
+        if (scenario == null) return true;
 
         if (string.IsNullOrWhiteSpace(requiredFlag))
             return true;
@@ -96,7 +155,7 @@ public sealed class PointFlagMoveTarget : MonoBehaviour
 
     private IEnumerator ConfirmRoutine()
     {
-        // Play VO after delay
+        // Optional: play confirm clip
         if (audioSource != null && confirmClip != null)
         {
             if (audioDelaySeconds > 0f)
@@ -105,7 +164,10 @@ public sealed class PointFlagMoveTarget : MonoBehaviour
             audioSource.PlayOneShot(confirmClip);
         }
 
-        // Raise the scenario flag after its own delay (sync external systems)
+        // Invoke events right after confirm (good for calling other scripts)
+        onConfirmed?.Invoke();
+
+        // Raise flag (optional)
         if (!string.IsNullOrWhiteSpace(raiseFlag) && scenario != null)
         {
             if (raiseFlagDelaySeconds > 0f)
@@ -130,11 +192,51 @@ public sealed class PointFlagMoveTarget : MonoBehaviour
             bool ok = agent.SetDestination(moveTo.position);
             if (log) Debug.Log($"[PointFlagMoveTarget] Move start -> {moveTo.name}, ok={ok}, onNavMesh={agent.isOnNavMesh}", this);
 
-            if (disableAfterArrive)
-                StartCoroutine(DisableWhenArrived());
+            // Start moving animation immediately
+            SetMovingAnim(true);
+
+            // Stop moving animation when arrived (and optionally disable)
+            if (_arriveRoutine != null) StopCoroutine(_arriveRoutine);
+            _arriveRoutine = StartCoroutine(ArriveWatcherRoutine(disableAfterArrive));
         }
 
         _routine = null;
+    }
+
+    private IEnumerator ArriveWatcherRoutine(bool disableOnArrive)
+    {
+        // Wait until we arrived (or agent gets disabled)
+        while (agent != null && agent.enabled && moveTo != null)
+        {
+            if (!agent.pathPending)
+            {
+                float stop = Mathf.Max(arriveDistance, agent.stoppingDistance + 0.05f);
+
+                // Consider velocity too (prevents stuck “moving true” at destination)
+                bool closeEnough = agent.remainingDistance <= stop;
+                bool slowEnough = agent.velocity.magnitude <= movingSpeedThreshold;
+
+                if (closeEnough && slowEnough)
+                    break;
+            }
+
+            yield return null;
+        }
+
+        SetMovingAnim(false);
+
+        if (disableOnArrive)
+            gameObject.SetActive(false);
+
+        _arriveRoutine = null;
+    }
+
+    private void SetMovingAnim(bool moving)
+    {
+        if (animator == null) return;
+        if (string.IsNullOrWhiteSpace(movingBoolParam)) return;
+
+        animator.SetBool(movingBoolParam, moving);
     }
 
     private void EnsureOnNavMesh()
@@ -144,21 +246,5 @@ public sealed class PointFlagMoveTarget : MonoBehaviour
 
         if (NavMesh.SamplePosition(agent.transform.position, out var hit, 2f, NavMesh.AllAreas))
             agent.Warp(hit.position);
-    }
-
-    private IEnumerator DisableWhenArrived()
-    {
-        while (agent != null && agent.enabled)
-        {
-            if (!agent.pathPending)
-            {
-                float stop = Mathf.Max(arriveDistance, agent.stoppingDistance + 0.05f);
-                if (agent.remainingDistance <= stop)
-                    break;
-            }
-            yield return null;
-        }
-
-        gameObject.SetActive(false);
     }
 }

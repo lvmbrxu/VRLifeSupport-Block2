@@ -7,6 +7,7 @@ public sealed class PointRayOrigin : MonoBehaviour
     [SerializeField] private Transform rayOrigin;
     [SerializeField] private float maxDistance = 10f;
     [SerializeField] private LayerMask hitMask = ~0;
+    [SerializeField] private QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.Ignore;
 
     [Header("Hold to confirm")]
     [SerializeField] private float holdSeconds = 0.6f;
@@ -33,26 +34,38 @@ public sealed class PointRayOrigin : MonoBehaviour
         Ray ray = new Ray(rayOrigin.position, rayOrigin.forward);
         if (drawRay) Debug.DrawRay(ray.origin, ray.direction * maxDistance);
 
-        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, hitMask, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, hitMask, triggerInteraction))
         {
-            var target = hit.collider.GetComponentInParent<PointFlagMoveTarget>();
+            // IMPORTANT: support multiple PointFlagMoveTarget components on the same NPC.
+            var targets = hit.collider.GetComponentsInParent<PointFlagMoveTarget>(true);
 
-            if (target != null && target.CanInteract())
+            PointFlagMoveTarget chosen = null;
+            for (int i = 0; i < targets.Length; i++)
             {
-                if (target == _current)
+                if (targets[i] != null && targets[i].CanInteract())
+                {
+                    chosen = targets[i];
+                    break;
+                }
+            }
+
+            if (chosen != null)
+            {
+                if (chosen == _current)
                     _holdTimer += Time.deltaTime;
                 else
                 {
-                    _current = target;
+                    _current = chosen;
                     _holdTimer = 0f;
                 }
 
                 if (_holdTimer >= holdSeconds)
                 {
-                    if (log) Debug.Log($"[PointRayOrigin] Confirm -> {target.name}", target);
+                    if (log)
+                        Debug.Log($"[PointRayOrigin] Confirm -> {chosen.name} (component: {chosen.GetType().Name})", chosen);
 
                     _holdTimer = 0f;
-                    target.Confirm();
+                    chosen.Confirm();
                     _current = null; // require re-pointing
                 }
 

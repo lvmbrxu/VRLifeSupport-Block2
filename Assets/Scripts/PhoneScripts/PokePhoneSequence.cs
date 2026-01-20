@@ -20,9 +20,19 @@ public class PokePhoneSequence : MonoBehaviour
 
     [Header("Audio")]
     public AudioSource audioSource;
+
+    [Header("2nd poke audio")]
     public AudioClip notificationClip;
     [Tooltip("Delay before playing notification sound after 2nd poke.")]
-    public float soundDelay = 0.2f;
+    public float notificationSoundDelay = 0.2f;
+
+    [Header("3rd poke audio (FINAL)")]
+    public AudioClip finalClip;
+    [Tooltip("Delay before playing final sound after 3rd poke.")]
+    public float finalSoundDelay = 0.2f;
+
+    [Tooltip("Disable AudioSource again after playing a clip (prevents any weird autoplay).")]
+    public bool disableAudioSourceAfterPlay = true;
 
     private int step = 0;
     private Coroutine moveRoutine;
@@ -58,61 +68,56 @@ public class PokePhoneSequence : MonoBehaviour
                 break;
 
             case 1:
-                // 2nd poke: show notification and play sound (no time limit)
+                // 2nd poke: show notification and play sound
                 ApplyMaterial(notificationMaterial);
-                PlayNotificationSoundWithDelay();
+                PlayClipWithDelay(notificationClip, notificationSoundDelay);
                 step = 2;
                 break;
 
             case 2:
-                // 3rd poke: finalize
-                StopSoundRoutine();
-
+                // 3rd poke: finalize (material + move + FINAL sound)
                 ApplyMaterial(step2Material);
                 StartMove(pose2Target);
-
-                // optional: turn audio OFF again after sound
-                if (audioSource != null)
-                {
-                    audioSource.Stop();
-                    audioSource.enabled = false;
-                }
-
+                PlayClipWithDelay(finalClip, finalSoundDelay);
                 step = 3;
                 break;
 
-            // step 3+: ignore further pokes (or extend later)
+            // step 3+: ignore further pokes
         }
     }
 
-    private void PlayNotificationSoundWithDelay()
+    private void PlayClipWithDelay(AudioClip clip, float delay)
     {
-        if (audioSource == null || notificationClip == null)
+        if (audioSource == null || clip == null)
             return;
 
-        StopSoundRoutine();
-        soundRoutine = StartCoroutine(PlaySoundDelayed());
-    }
-
-    private IEnumerator PlaySoundDelayed()
-    {
-        // Enable audio only when needed
-        audioSource.enabled = true;
-
-        if (soundDelay > 0f)
-            yield return new WaitForSeconds(soundDelay);
-
-        audioSource.PlayOneShot(notificationClip);
-        soundRoutine = null;
-    }
-
-    private void StopSoundRoutine()
-    {
         if (soundRoutine != null)
         {
             StopCoroutine(soundRoutine);
             soundRoutine = null;
         }
+
+        soundRoutine = StartCoroutine(PlayClipDelayedRoutine(clip, delay));
+    }
+
+    private IEnumerator PlayClipDelayedRoutine(AudioClip clip, float delay)
+    {
+        audioSource.enabled = true;
+
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+
+        audioSource.PlayOneShot(clip);
+
+        // optionally disable after it finishes
+        if (disableAudioSourceAfterPlay)
+        {
+            yield return new WaitForSeconds(clip.length);
+            audioSource.Stop();
+            audioSource.enabled = false;
+        }
+
+        soundRoutine = null;
     }
 
     private void StartMove(Transform target)
