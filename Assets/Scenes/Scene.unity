@@ -1109,6 +1109,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 31483c71f21700a4d8734cfe86458c93, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1687684791}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 31483c71f21700a4d8734cfe86458c93, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 919132149120382328}
   m_SourcePrefab: {fileID: 100100000, guid: 31483c71f21700a4d8734cfe86458c93, type: 3}
 --- !u!1 &120550795
 GameObject:
@@ -6975,7 +6978,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Interactors.XRSocketInteractor
   m_InteractionManager: {fileID: 0}
   m_InteractionLayers:
-    m_Bits: 4294967295
+    m_Bits: 1073741824
   m_Handedness: 0
   m_AttachTransform: {fileID: 0}
   m_KeepSelectedTargetValid: 1
@@ -10200,7 +10203,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Interactors.XRSocketInteractor
   m_InteractionManager: {fileID: 0}
   m_InteractionLayers:
-    m_Bits: 4294967295
+    m_Bits: 1073741824
   m_Handedness: 0
   m_AttachTransform: {fileID: 0}
   m_KeepSelectedTargetValid: 1
@@ -14020,6 +14023,8 @@ MonoBehaviour:
   startFlag: AedArrived
   kidArrivedFlag: KidArrived
   kidHandledFlag: KidHandled
+  minStartDelay: 10
+  maxStartDelay: 30
   kidRoot: {fileID: 15232645}
   agent: {fileID: 15232647}
   animator: {fileID: 15232646}
@@ -14035,7 +14040,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 97a53b9086687464290bb8666c9ba620, type: 3}
   leavingLines:
   - {fileID: 8300000, guid: bcc541dee97b20844a240d89b9490e68, type: 3}
-  arrivalVoiceDelay: 3.4
+  arrivalVoiceDelay: 4.68
   leaveMoveDelay: 0.2
   log: 0
 --- !u!1001 &1182906304
@@ -24826,6 +24831,42 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 31483c71f21700a4d8734cfe86458c93, type: 3}
   m_PrefabInstance: {fileID: 100337702}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &919132149120382328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132149120382327}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8f764273321444bb23210432534a8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PointFlagMoveTarget
+  scenario: {fileID: 1529069649}
+  requiredFlag: KidArrived
+  raiseFlag: KidHandled
+  raiseFlagDelaySeconds: 0
+  onlyOnce: 1
+  agent: {fileID: 72476913}
+  moveTo: {fileID: 232592947}
+  moveStartDelaySeconds: 1.5
+  warpToNavMeshIfNeeded: 1
+  disableAfterArrive: 0
+  arriveDistance: 0.7
+  animator: {fileID: 1687684795}
+  movingBoolParam: IsWalking
+  speedFloatParam: 
+  movingSpeedThreshold: 0.05
+  visualRootToRotate: {fileID: 0}
+  turnSpeed: 720
+  audioSource: {fileID: 429011745}
+  confirmClip: {fileID: 8300000, guid: a99d535fd8a359b47af565c884ad3050, type: 3}
+  audioDelaySeconds: 0.2
+  onConfirmed:
+    m_PersistentCalls:
+      m_Calls: []
+  log: 0
 --- !u!33 &1485117989445201409
 MeshFilter:
   m_ObjectHideFlags: 0

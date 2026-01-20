@@ -18,6 +18,13 @@ public sealed class KidFollowUpController : MonoBehaviour
     [Tooltip("When this flag is raised (by pointing at the female again), the kid leaves.")]
     [SerializeField] private string kidHandledFlag = "KidHandled";
 
+    [Header("Start Delay (NEW)")]
+    [Tooltip("Random delay after startFlag before the kid spawns/moves in.")]
+    [SerializeField] private float minStartDelay = 2f;
+
+    [Tooltip("Random delay after startFlag before the kid spawns/moves in.")]
+    [SerializeField] private float maxStartDelay = 6f;
+
     [Header("Kid NPC")]
     [Tooltip("Kid root object (can be disabled at start).")]
     [SerializeField] private GameObject kidRoot;
@@ -134,6 +141,11 @@ public sealed class KidFollowUpController : MonoBehaviour
 
     private IEnumerator ArriveRoutine()
     {
+        // NEW: random delay before kid appears
+        float delay = Random.Range(minStartDelay, maxStartDelay);
+        if (log) Debug.Log($"[Kid] Will enter in {delay:F1}s", this);
+        if (delay > 0f) yield return new WaitForSeconds(delay);
+
         kidRoot.SetActive(true);
 
         // place at spawn
