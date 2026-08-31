@@ -29,3 +29,5 @@ The prototype received 11/12 points and was selected as the strongest of five st
 Clone the repository and open it through Unity Hub. The project files are stored at the repository root.
 
 This is a student project created for an external client. Some third-party assets may have their own licences.
+
+More of my work is available on my [portfolio](https://vladut-andrei-lambru.github.io/Portfolio/). Contact: [v.lambru@st.hanze.nl](mailto:v.lambru@st.hanze.nl).
